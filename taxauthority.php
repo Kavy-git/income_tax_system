@@ -1,147 +1,131 @@
 <?php
 session_start();
-include 'db.php'; // Include the database connection
+include 'db.php';
 
-// Check if the user is logged in and has the role of "TaxAuthority"
-//echo $_SESSION['role']; // Temporarily output the role for debugging
-
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'taxauthority') {
-    die("Access denied.");
+// Ensure that only logged-in authorities can view the page
+if (!isset($_SESSION['role']) || $_SESSION['role'] !== 'taxauthority') {
+    // Redirect to login page if the user is not logged in as authority
+    header("Location: login.php");
+    exit();
 }
+
+// Fetch Taxpayers Assigned to Professionals
+function fetchTaxpayers($conn) {
+    $query = "SELECT p.user_id AS professional_id, p.name AS professional_name,
+                     t.user_id AS taxpayer_id, t.name AS taxpayer_name
+              FROM TaxProfessional p
+              LEFT JOIN Taxpayer t ON p.user_id = t.tax_professional_id";
+    return $conn->query($query);
+}
+
+$taxpayers = fetchTaxpayers($conn);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>TaxAuthority Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Authority</title>
     <style>
+        /* Global Styles */
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-        }
-        .container {
-            width: 80%;
-            margin: auto;
-            overflow: hidden;
-        }
-        .section {
-            background: #fff;
+            background-color: #121212; /* Dark Background */
+            color: #e0e0e0; /* Light Text */
+            margin: 0;
             padding: 20px;
-            margin-bottom: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #1e1e1e; /* Dark container */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
+        }
+
+        h1 {
+            color: #f5f5f5; /* Light text for header */
+            text-align: center;
+        }
+
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            color: #fff;
+            background-color: #007BFF;
+            border: none;
             border-radius: 5px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
-        .section h2 {
-            color: #333;
+
+        button:hover {
+            background-color: #0056b3;
         }
+
+        /* Table Styles */
         table {
             width: 100%;
-            margin: 10px 0;
             border-collapse: collapse;
+            margin-top: 20px;
         }
-        table, th, td {
-            border: 1px solid #ddd;
+
+        table th, table td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: center;
         }
-        th, td {
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #35F374;
+
+        table th {
+            background-color: #333; /* Dark background for headers */
             color: #fff;
+        }
+
+        table td {
+            background-color: #222; /* Dark background for rows */
+        }
+
+        table tr:nth-child(even) td {
+            background-color: #2b2b2b; /* Slightly lighter dark for even rows */
+        }
+
+        table tr:hover td {
+            background-color: #444; /* Highlight row on hover */
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Welcome, TaxAuthority</h1>
+<div class="container">
+    <h1>Tax Authority</h1>
 
-        <!-- Section: View Tax Professionals -->
-        <div class="section">
-            <h2>View Tax Professionals</h2>
-            <?php
-            $professionals_query = "SELECT id, name, email, phone FROM TaxProfessional";
-            $professionals_result = $conn->query($professionals_query);
-            if ($professionals_result->num_rows > 0) {
-                echo "<table><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th></tr>";
-                while ($row = $professionals_result->fetch_assoc()) {
-                    echo "<tr><td>{$row['id']}</td><td>{$row['name']}</td><td>{$row['email']}</td><td>{$row['phone']}</td></tr>";
-                }
-                echo "</table>";
-            } else {
-                echo "No tax professionals found.";
-            }
-            ?>
-        </div>
+    <!-- Navigation buttons -->
+    <button onclick="window.location.href='add_professional.php'">Add TaxProfessional</button>
+    <button onclick="window.location.href='delete_taxprofessional.php'">Delete TaxProfessional</button>
 
-        <!-- Section: View Clients -->
-        <div class="section">
-            <h2>View Clients</h2>
-            <?php
-            $clients_query = "SELECT id, name, email, phone FROM Taxpayer";
-            $clients_result = $conn->query($clients_query);
-            if ($clients_result->num_rows > 0) {
-                echo "<table><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th></tr>";
-                while ($row = $clients_result->fetch_assoc()) {
-                    echo "<tr><td>{$row['id']}</td><td>{$row['name']}</td><td>{$row['email']}</td><td>{$row['phone']}</td></tr>";
-                }
-                echo "</table>";
-            } else {
-                echo "No clients found.";
-            }
-            ?>
-        </div>
-
-        <!-- Section: Monitor Payment Status -->
-        <div class="section">
-            <h2>Monitor Payment Status</h2>
-            <?php
-            $payments_query = "SELECT payment_id, taxpayer_id, amount, status, payment_date FROM Payments";
-            $payments_result = $conn->query($payments_query);
-            if ($payments_result->num_rows > 0) {
-                echo "<table><tr><th>Payment ID</th><th>Taxpayer ID</th><th>Amount</th><th>Status</th><th>Date</th></tr>";
-                while ($row = $payments_result->fetch_assoc()) {
-                    echo "<tr><td>{$row['payment_id']}</td><td>{$row['taxpayer_id']}</td><td>{$row['amount']}</td><td>{$row['status']}</td><td>{$row['payment_date']}</td></tr>";
-                }
-                echo "</table>";
-            } else {
-                echo "No payment records found.";
-            }
-            ?>
-        </div>
-
-        <!-- Section: Generate Tax Reports -->
-        <div class="section">
-            <h2>Generate Tax Reports</h2>
-            <form action="generate_report.php" method="POST">
-                <label for="year">Select Year:</label>
-                <select name="year" required>
-                    <option value="2023">2023</option>
-                    <option value="2024">2024</option>
-                    <option value="2025">2025</option>
-                </select>
-                <button type="submit">Generate Report</button>
-            </form>
-        </div>
-
-        <!-- Section: Handle Tax Refunds and Audits -->
-        <div class="section">
-            <h2>Handle Tax Refunds and Audits</h2>
-            <?php
-            $refunds_query = "SELECT refund_id, taxpayer_id, amount, status, request_date FROM Refunds";
-            $refunds_result = $conn->query($refunds_query);
-            if ($refunds_result->num_rows > 0) {
-                echo "<table><tr><th>Refund ID</th><th>Taxpayer ID</th><th>Amount</th><th>Status</th><th>Request Date</th></tr>";
-                while ($row = $refunds_result->fetch_assoc()) {
-                    echo "<tr><td>{$row['refund_id']}</td><td>{$row['taxpayer_id']}</td><td>{$row['amount']}</td><td>{$row['status']}</td><td>{$row['request_date']}</td></tr>";
-                }
-                echo "</table>";
-            } else {
-                echo "No refunds or audits found.";
-            }
-            ?>
-        </div>
-    </div>
+    <h2>Taxpayers Assigned to Professionals</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>TaxProfessional ID</th>
+            <th>TaxProfessional Name</th>
+            <th>Taxpayer ID</th>
+            <th>Taxpayer Name</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php while ($row = $taxpayers->fetch_assoc()) { ?>
+            <tr>
+                <td><?php echo htmlspecialchars($row['professional_id']); ?></td>
+                <td><?php echo htmlspecialchars($row['professional_name']); ?></td>
+                <td><?php echo htmlspecialchars($row['taxpayer_id']); ?></td>
+                <td><?php echo htmlspecialchars($row['taxpayer_name']); ?></td>
+            </tr>
+        <?php } ?>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>

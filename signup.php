@@ -159,6 +159,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <input type="email" name="email" placeholder="Email" required>
             <input type="text" name="phone" placeholder="Phone" required>
             <input type="password" name="password" placeholder="Password" required>
+            <input type="hidden" name="tax_professional_id" value="125">
             <select name="role" required>
                 <option value="taxpayer">Taxpayer</option>
                 <option value="taxprofessional">TaxProfessional</option>

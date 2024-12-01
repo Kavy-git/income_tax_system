@@ -10,7 +10,7 @@ $comment = $_POST['comment'];  // Get the comment
 echo "Session UserID: " . $user_id . "<br>";  // Make sure this is correctly set
 
 // Step 1: Get the TaxpayerID corresponding to the user_id
-$check_user_query = "SELECT TaxpayerID FROM Taxpayer WHERE user_id = ?";
+$check_user_query = "SELECT TaxpayerID FROM Taxpayer WHERE tax_professional_id = ?";
 $check_user_stmt = $conn->prepare($check_user_query);
 $check_user_stmt->bind_param("i", $user_id);  // Bind the user_id as an integer
 $check_user_stmt->execute();
